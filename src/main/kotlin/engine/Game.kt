@@ -15,13 +15,12 @@ import game.InitialGameState
 object Game : Application {
     val sounds by Kore.context.injector(true) { SoundManager() }
     val textures by Kore.context.injector(true) { TextureManager() }
+    val fonts by Kore.context.injector(true) { FontManager() }
     val shaders by Kore.context.injector(true) { ShaderManager() }
 
     val controls by Kore.context.injector(true) { ControlManager() }
     val graphics2d by Kore.context.injector(true) { Graphics2D() }
     val renderer by Kore.context.injector(true) { RenderManager() }
-
-
 
     val physics by Kore.context.injector(true) { Physics() }
     val rumble by Kore.context.injector(true) { Rumble() }
