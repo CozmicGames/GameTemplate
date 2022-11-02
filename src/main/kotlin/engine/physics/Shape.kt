@@ -1,7 +1,7 @@
 package engine.physics
 
-import com.gratedgames.utils.extensions.isOdd
-import com.gratedgames.utils.maths.*
+import com.cozmicgames.utils.extensions.isOdd
+import com.cozmicgames.utils.maths.*
 import engine.Game
 import kotlin.math.min
 

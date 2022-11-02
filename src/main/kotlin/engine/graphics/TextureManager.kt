@@ -1,46 +1,45 @@
 package engine.graphics
 
-import com.gratedgames.Kore
-import com.gratedgames.files
-import com.gratedgames.files.Files
-import com.gratedgames.graphics
-import com.gratedgames.graphics.Image
-import com.gratedgames.graphics.gpu.Texture
-import com.gratedgames.log
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.extensions.extension
-import com.gratedgames.utils.use
+import com.cozmicgames.Kore
+import com.cozmicgames.files.FileHandle
+import com.cozmicgames.graphics
+import com.cozmicgames.graphics.Image
+import com.cozmicgames.graphics.gpu.Texture
+import com.cozmicgames.log
+import com.cozmicgames.utils.Disposable
+import engine.Game
 import kotlin.reflect.KProperty
 
 class TextureManager : Disposable {
-    inner class Getter(val file: String, val filter: Texture.Filter) {
-        operator fun getValue(thisRef: Any, property: KProperty<*>) = getOrAdd(file, filter)
+    inner class Getter(private val fileHandle: FileHandle, filter: Texture.Filter) {
+        init {
+            if (fileHandle !in this@TextureManager)
+                add(fileHandle, filter)
+        }
+
+        operator fun getValue(thisRef: Any, property: KProperty<*>) = get(fileHandle) ?: Game.graphics2d.missingTexture.asRegion()
     }
 
-    private data class TextureKey(val filter: Texture.Filter)
+    data class TextureKey(val filter: Texture.Filter)
 
     private val textures = hashMapOf<TextureKey, TextureAtlas>()
     private val keys = hashMapOf<String, TextureKey>()
 
-    fun add(file: String, filter: Texture.Filter = Texture.Filter.NEAREST) {
-        if (!Kore.files.exists(file, Files.Type.ASSET)) {
-            Kore.log.error(this::class, "Texture file not found: $file")
+    fun add(fileHandle: FileHandle, filter: Texture.Filter = Texture.Filter.NEAREST) {
+        val image = if (fileHandle.exists)
+            Kore.graphics.readImage(fileHandle)
+        else {
+            Kore.log.error(this::class, "Texture file not found: $fileHandle")
             return
-        }
-
-        val image = Kore.files.readAsset(file).use {
-            Kore.graphics.readImage(it, file.extension)
         }
 
         if (image == null) {
-            Kore.log.error(this::class, "Failed to load texture file: $file")
+            Kore.log.error(this::class, "Failed to load texture file: $fileHandle")
             return
         }
 
-        add(file, image, filter)
+        add(fileHandle.fullPath, image, filter)
     }
-
-    operator fun contains(name: String) = name in keys
 
     fun add(file: String, image: Image, filter: Texture.Filter = Texture.Filter.NEAREST) {
         val key = TextureKey(filter)
@@ -49,28 +48,37 @@ class TextureManager : Disposable {
         keys[file] = key
     }
 
+    operator fun contains(file: FileHandle) = contains(file.fullPath)
+
+    operator fun contains(name: String) = name in keys
+
+    fun remove(file: FileHandle) = remove(file.fullPath)
+
     fun remove(file: String) {
         val key = keys[file] ?: return
         textures[key]?.remove(file)
     }
 
-    operator fun get(file: String): TextureRegion? {
-        val key = keys[file] ?: return null
+    operator fun get(fileHandle: FileHandle) = get(fileHandle.fullPath)
+
+    operator fun get(name: String): TextureRegion? {
+        val key = keys[name] ?: return null
         val texture = textures[key] ?: return null
-        return texture[file]
+        return texture[name]
     }
 
-    fun getOrAdd(file: String, filter: Texture.Filter = Texture.Filter.NEAREST): TextureRegion {
-        if (file !in this)
-            add(file, filter)
+    fun getOrAdd(fileHandle: FileHandle, filter: Texture.Filter = Texture.Filter.NEAREST): TextureRegion {
+        if (fileHandle !in this)
+            add(fileHandle, filter)
 
-        return requireNotNull(this[file])
+        return this[fileHandle] ?: Game.graphics2d.missingTexture.asRegion()
     }
 
-    private fun getAtlas(key: TextureKey): TextureAtlas {
+    fun getAtlas(key: TextureKey): TextureAtlas {
         return textures.getOrPut(key) {
-            TextureAtlas().also {
-                it.texture.setFilter(key.filter, key.filter)
+            when(key.filter) {
+                Texture.Filter.NEAREST -> TextureAtlas(sampler = Game.graphics2d.pointClampSampler)
+                Texture.Filter.LINEAR -> TextureAtlas(sampler = Game.graphics2d.linearClampSampler)
             }
         }
     }
@@ -81,5 +89,5 @@ class TextureManager : Disposable {
         }
     }
 
-    operator fun invoke(file: String, filter: Texture.Filter = Texture.Filter.NEAREST) = Getter(file, filter)
+    operator fun invoke(fileHandle: FileHandle, filter: Texture.Filter = Texture.Filter.NEAREST) = Getter(fileHandle, filter)
 }

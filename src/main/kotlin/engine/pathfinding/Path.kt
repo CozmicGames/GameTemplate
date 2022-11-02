@@ -1,6 +1,6 @@
 package engine.pathfinding
 
-import com.gratedgames.utils.maths.Vector2i
+import com.cozmicgames.utils.maths.Vector2i
 
 class Path {
     val length get() = steps.size

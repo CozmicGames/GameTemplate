@@ -1,7 +1,7 @@
 package engine.utils
 
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.collections.Pool
+import com.cozmicgames.utils.Disposable
+import com.cozmicgames.utils.collections.Pool
 
 open class CommandList<T : Any>(private val pool: Pool<T>) : Disposable {
     constructor(supplier: () -> T, reset: (T) -> Unit = {}) : this(Pool(supplier = supplier, reset = reset))

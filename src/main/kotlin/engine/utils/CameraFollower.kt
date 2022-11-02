@@ -1,7 +1,7 @@
 package engine.utils
 
-import com.gratedgames.utils.maths.Camera
-import com.gratedgames.utils.maths.Vector2
+import com.cozmicgames.utils.maths.Camera
+import com.cozmicgames.utils.maths.Vector2
 
 class CameraFollower(var camera: Camera, var follow: Vector2, var drag: Float = 0.0f) {
     fun update() {

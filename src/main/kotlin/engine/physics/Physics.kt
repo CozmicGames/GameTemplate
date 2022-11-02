@@ -1,12 +1,13 @@
 package engine.physics
 
-import com.gratedgames.utils.Updateable
-import com.gratedgames.utils.maths.*
+import com.cozmicgames.utils.Updateable
+import com.cozmicgames.utils.maths.*
 import kotlin.math.*
 
 class Physics : Updateable {
     val gravity = Vector2(0.0f, -100.0f)
     var resolveIterations = 100
+    var subSteps = 5
     var positionRoundingThreshold = 0.05f
     var doPositionalCorrection = true
     var doPositionRounding = true
@@ -19,6 +20,12 @@ class Physics : Updateable {
     private val manifolds = arrayListOf<Manifold>()
 
     override fun update(delta: Float) {
+        repeat(subSteps) {
+            step(delta / subSteps)
+        }
+    }
+
+    private fun step(delta: Float) {
         fun integrateForces(body: Body) {
             if (!body.isStatic) {
                 body.velocity.x += (body.force.x * body.inverseMass + gravity.x) * delta * 0.5f

@@ -1,8 +1,12 @@
 package engine.utils
 
-import com.gratedgames.utils.Properties
-import com.gratedgames.utils.maths.Matrix3x2
-import com.gratedgames.utils.maths.Vector2
+import com.cozmicgames.utils.Properties
+import com.cozmicgames.utils.maths.Matrix2x2
+import com.cozmicgames.utils.maths.Matrix3x2
+import com.cozmicgames.utils.maths.Vector2
+import com.cozmicgames.utils.maths.length
+import kotlin.math.cos
+import kotlin.math.sin
 
 class Transform(parent: Transform? = null) : Savable {
     private var isDirty = true
@@ -81,11 +85,17 @@ class Transform(parent: Transform? = null) : Savable {
         val p = parent
         if (p == null)
             internalGlobal.set(internalLocal)
-        else
-            internalGlobal.set(p.global).mul(internalLocal)
+        else {
+            val s = sin(p.rotation)
+            val c = cos(p.rotation)
+            val offsetX = x * c - y * s
+            val offsetY = x * s + y * c
+
+            internalGlobal.setToTranslationRotationScaling(p.x + offsetX, p.y + offsetY, p.rotation + rotation, scaleX, scaleY)
+        }
 
         children.forEach {
-            it.update()
+            it.setDirty()
         }
     }
 
@@ -122,4 +132,18 @@ class Transform(parent: Transform? = null) : Savable {
         properties.setFloat("rotation", rotation)
         properties.setFloatArray("scale", arrayOf(scaleX, scaleY))
     }
+}
+
+fun Transform.rotateAround(x: Float, y: Float, angle: Float) {
+    val s = sin(angle)
+    val c = cos(angle)
+
+    this.x -= x
+    this.y -= y
+
+    val nx = this.x * c - this.y * s
+    val ny = this.x * s + this.y * c
+
+    this.x = nx + x
+    this.y = ny + y
 }

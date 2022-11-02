@@ -1,15 +1,23 @@
 package engine.graphics.particles
 
-import com.gratedgames.utils.Color
-import com.gratedgames.utils.maths.toRadians
+import com.cozmicgames.utils.Color
+import com.cozmicgames.utils.maths.Matrix3x2
+import com.cozmicgames.utils.maths.toRadians
 import engine.Game
-import engine.graphics.Renderer
 import engine.graphics.asRegion
+import engine.graphics.drawRect
 import engine.graphics.particles.data.*
+import engine.graphics.shaders.ParticleShader
 import kotlin.math.floor
 import kotlin.math.min
 
 class ParticleEffect(maxParticles: Int, var emitRate: Float) {
+    companion object {
+        init {
+            Game.shaders.add("particle", ParticleShader)
+        }
+    }
+
     private val generators = arrayListOf<ParticleGenerator>()
     private val spawners = arrayListOf<ParticleSpawner>()
     private val updaters = arrayListOf<ParticleUpdater>()
@@ -95,7 +103,7 @@ class ParticleEffect(maxParticles: Int, var emitRate: Float) {
         }
     }
 
-    fun render(renderer: Renderer) {
+    fun render(layer: Int, transform: Matrix3x2? = null) {
         val positions = data.getArrayOrNull<PositionData>() ?: return
         val sizes = data.getArrayOrNull<SizeData>() ?: return
 
@@ -103,11 +111,35 @@ class ParticleEffect(maxParticles: Int, var emitRate: Float) {
         val textures = data.getArrayOrNull<TextureData>()
         val colors = data.getArrayOrNull<ColorData>()
 
-        repeat(data.numberOfAlive) {
-            val angle = angles?.get(it)?.angle ?: 0.0f
-            val color = colors?.get(it)?.color ?: Color.WHITE
-            val texture = textures?.get(it)?.region ?: Game.graphics2d.blankTexture.asRegion()
-            renderer.draw(texture, positions[it].x, positions[it].y, sizes[it].size, sizes[it].size, color, toRadians(angle))
+        var index = 0
+
+        while (index < data.numberOfAlive) {
+            var currentTexture = textures?.get(index)?.region
+
+            Game.renderer.submit(layer, currentTexture?.texture ?: Game.graphics2d.blankTexture, "particle", false, false) { context ->
+                while (index < data.numberOfAlive) {
+                    if (textures?.get(index)?.region != currentTexture) {
+                        currentTexture = textures?.get(index)?.region
+                        break
+                    }
+
+                    val angle = angles?.get(index)?.angle ?: 0.0f
+                    val color = colors?.get(index)?.color ?: Color.WHITE
+
+                    val position = positions[index]
+                    val size = sizes[index]
+
+                    index++
+
+                    val region = currentTexture ?: Game.graphics2d.blankTexture.asRegion()
+
+                    context.drawRect(position.x, position.y, size.size, size.size, color, toRadians(angle), region.u0, region.v0, region.u1, region.v1)
+                }
+
+                transform?.let {
+                    context.transform(it)
+                }
+            }
         }
     }
 }

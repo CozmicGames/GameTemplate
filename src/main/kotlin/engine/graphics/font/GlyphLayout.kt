@@ -1,8 +1,8 @@
 package engine.graphics.font
 
-import com.gratedgames.utils.collections.Pool
-import com.gratedgames.utils.maths.Rectangle
-import com.gratedgames.utils.maths.Vector2
+import com.cozmicgames.utils.collections.Pool
+import com.cozmicgames.utils.maths.Rectangle
+import com.cozmicgames.utils.maths.Vector2
 import kotlin.math.max
 
 class GlyphLayout() : Iterable<GlyphLayout.Quad> {

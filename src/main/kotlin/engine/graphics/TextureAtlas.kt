@@ -1,15 +1,17 @@
 package engine.graphics
 
-import com.gratedgames.Kore
-import com.gratedgames.graphics
-import com.gratedgames.graphics.Image
-import com.gratedgames.graphics.gpu.Texture
-import com.gratedgames.graphics.setImage
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.rectpack.RectPacker
+import com.cozmicgames.Kore
+import com.cozmicgames.graphics
+import com.cozmicgames.graphics.Image
+import com.cozmicgames.graphics.gpu.Sampler
+import com.cozmicgames.graphics.gpu.Texture
+import com.cozmicgames.graphics.setImage
+import com.cozmicgames.utils.Disposable
+import com.cozmicgames.utils.rectpack.RectPacker
+import engine.Game
 
-class TextureAtlas(format: Texture.Format = Texture.Format.RGBA8_UNORM) : Disposable {
-    val texture = Kore.graphics.createTexture2D(format)
+class TextureAtlas(format: Texture.Format = Texture.Format.RGBA8_UNORM, sampler: Sampler = Game.graphics2d.pointClampSampler) : Disposable {
+    val texture = Kore.graphics.createTexture2D(format, sampler)
 
     private var images = hashMapOf<String, Image>()
     private var packed = hashMapOf<String, TextureRegion>()

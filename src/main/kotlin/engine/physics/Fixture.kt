@@ -1,6 +1,6 @@
 package engine.physics
 
-import com.gratedgames.utils.maths.*
+import com.cozmicgames.utils.maths.*
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

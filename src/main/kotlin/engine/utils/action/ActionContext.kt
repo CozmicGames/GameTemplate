@@ -1,8 +1,8 @@
 package engine.utils.action
 
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.Time
-import kotlin.concurrent.thread
+import com.cozmicgames.utils.Disposable
+import com.cozmicgames.utils.Time
+import java.util.concurrent.Executors
 
 class ActionContext() : Disposable {
     open class Runner(private var action: Action) {
@@ -15,20 +15,22 @@ class ActionContext() : Disposable {
     }
 
     private inner class AsyncRunner(action: Action) : Runner(action) {
-        val thread = thread {
-            //TODO: Use some sort of threadpool or ExecutorService for this.. However long running tasks have to be considered
-            var previousTime = Time.current
-            while (!isDisposed) {
-                val currentTime = Time.current
-                val delta = (currentTime - previousTime).toFloat()
-                previousTime = currentTime
+        init {
+            executor.submit {
+                var previousTime = Time.current
+                while (!isDisposed) {
+                    val currentTime = Time.current
+                    val delta = (currentTime - previousTime).toFloat()
+                    previousTime = currentTime
 
-                if (!update(delta))
-                    break
+                    if (!update(delta))
+                        break
+                }
             }
         }
     }
 
+    private val executor = Executors.newCachedThreadPool()
     private val runners = arrayListOf<Runner>()
     private val processingRunners = arrayListOf<Runner>()
     private var isDisposed = false
@@ -56,10 +58,7 @@ class ActionContext() : Disposable {
 
     override fun dispose() {
         isDisposed = true
-        for (runner in runners) {
-            if (runner is AsyncRunner)
-                runner.thread.join()
-        }
+        executor.shutdown()
         runners.clear()
     }
 }

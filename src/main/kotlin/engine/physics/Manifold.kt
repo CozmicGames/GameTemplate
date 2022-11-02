@@ -1,6 +1,6 @@
 package engine.physics
 
-import com.gratedgames.utils.maths.Vector2
+import com.cozmicgames.utils.maths.Vector2
 
 class Manifold {
     lateinit var a: Body

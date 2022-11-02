@@ -1,6 +1,6 @@
 package engine.graphics.particles.updaters
 
-import com.gratedgames.utils.maths.lerp
+import com.cozmicgames.utils.maths.lerp
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleUpdater
 import engine.graphics.particles.data.ColorData

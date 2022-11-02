@@ -1,30 +1,30 @@
 package engine.graphics
 
-import com.gratedgames.Kore
-import com.gratedgames.graphics
-import com.gratedgames.graphics.*
+import com.cozmicgames.Kore
+import com.cozmicgames.graphics
+import com.cozmicgames.graphics.IndexDataType
+import com.cozmicgames.graphics.Primitive
+import com.cozmicgames.graphics.gpu.*
+import com.cozmicgames.utils.Color
+import com.cozmicgames.utils.Disposable
+import com.cozmicgames.utils.collections.DynamicStack
+import com.cozmicgames.utils.maths.Camera
+import com.cozmicgames.utils.maths.Matrix4x4
+import com.cozmicgames.utils.maths.VectorPath
+import engine.Game
 import engine.graphics.font.GlyphLayout
-import com.gratedgames.graphics.gpu.*
 import engine.graphics.shaders.DefaultShader
 import engine.graphics.shaders.Shader
-import com.gratedgames.utils.Color
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.collections.Stack
-import com.gratedgames.utils.maths.Camera
-import com.gratedgames.utils.maths.Matrix4x4
-import com.gratedgames.utils.maths.VectorPath
-import engine.Game
-import engine.graphics.sprite.Sprite
-import engine.utils.CommandList
+import engine.materials.Material
 
-class Renderer : Disposable {
-    val context = DrawContext2D()
+class Renderer(graphics: Graphics2D) : Disposable {
+    val context = DrawContext()
 
     private val vertexBuffer = Kore.graphics.createBuffer(GraphicsBuffer.Usage.DYNAMIC)
     private val indexBuffer = Kore.graphics.createBuffer(GraphicsBuffer.Usage.DYNAMIC)
     private val pipelines = hashMapOf<Shader, Pipeline>()
     private val path = VectorPath()
-    private val scissorStack = Stack<ScissorRect?>()
+    private val scissorStack = DynamicStack<ScissorRect?>()
     private var forceUpdateUniforms = false
     private var forceUpdateShader = false
 
@@ -50,17 +50,17 @@ class Renderer : Disposable {
             field = value
         }
 
-    var transform = Game.graphics2d.defaultCamera.projectionView
+    var transform = graphics.defaultCamera.projectionView
         set(value) {
             if (!forceUpdateUniforms && value == field)
                 return
 
             flush()
-            pipelines[shader]?.getMatrixUniform("uTransform")?.update(value)
+            pipelines[shader]?.getMatrixUniform("uCameraTransform")?.update(value)
             field = value
         }
 
-    var texture: Texture2D = Game.graphics2d.blankTexture
+    var texture: Texture2D = graphics.blankTexture
         set(value) {
             if (!forceUpdateUniforms && value == field)
                 return
@@ -187,37 +187,50 @@ class Renderer : Disposable {
         context.drawPathStroke(path, thickness, closed, color, extrusionOffset)
     }
 
-    fun draw(sprite: Sprite) {
+    fun drawGlyphs(glyphLayout: GlyphLayout, x: Float, y: Float, color: Color = Color.WHITE) {
         require(isActive)
 
-        this.texture = sprite.texture.texture
-        context.drawSprite(sprite)
-    }
+        val shader = Game.shaders[glyphLayout.font.requiredShader] ?: DefaultShader
 
-    fun draw(glyphLayout: GlyphLayout, x: Float, y: Float, color: Color = Color.WHITE) {
-        require(isActive)
-
-        withShader(glyphLayout.font.requiredShader) {
+        withShader(shader) {
             this.texture = glyphLayout.font.texture
             context.drawGlyphs(glyphLayout, x, y, color)
         }
     }
 
-    fun draw(command: DrawCommand) {
+    fun drawTriangle(x0: Float, y0: Float, x1: Float, y1: Float, x2: Float, y2: Float, color0: Color, color1: Color = color0, color2: Color = color0) {
         require(isActive)
 
-        this.texture = command.texture ?: Game.graphics2d.blankTexture
-        this.shader = command.shader ?: DefaultShader
+        texture = Game.graphics2d.blankTexture
 
-        context.draw(command.content)
+        context.drawTriangle(x0, y0, x1, y1, x2, y2, color0, color1, color2)
     }
 
-    fun draw(commands: CommandList<DrawCommand>, reset: Boolean = true) {
-        commands.process {
-            draw(it)
+    fun drawRect(x: Float, y: Float, width: Float, height: Float, color00: Color, color01: Color = color00, color11: Color = color00, color10: Color = color00) {
+        require(isActive)
 
-            if (reset)
-                it.reset()
+        texture = Game.graphics2d.blankTexture
+
+        context.drawRect(x, y, width, height, color00, color01, color11, color10)
+    }
+
+    fun drawBatch(batch: RenderBatch) {
+        require(isActive)
+
+        val material = batch.material
+
+        if (material != null) {
+            val shader = Game.shaders[material.shader] ?: DefaultShader
+            withShader(shader) {
+                texture = Game.textures[material.colorTexturePath]?.texture ?: Game.graphics2d.missingTexture
+                shader.setMaterial(material)
+                context.draw(batch.context)
+            }
+        } else {
+            withShader(DefaultShader) {
+                texture = Game.graphics2d.missingTexture
+                context.draw(batch.context)
+            }
         }
     }
 
@@ -268,36 +281,8 @@ class Renderer : Disposable {
     }
 }
 
-inline fun <R> Renderer.render(camera: Camera, block: (Renderer) -> R) = render(camera.projectionView, block)
-
-inline fun <R> Renderer.render(transform: Matrix4x4 = Game.graphics2d.defaultCamera.projectionView, block: (Renderer) -> R): R {
-    begin(transform)
-    val result = block(this)
-    end()
-    return result
-}
-
-inline fun Renderer.setCamera(camera: Camera) {
+fun Renderer.setCamera(camera: Camera) {
     this.transform = camera.projectionView
 }
 
-inline fun <R> Renderer.withCamera(camera: Camera, noinline block: (Renderer) -> R) = withTransform(camera.projectionView, block)
-
-inline fun Renderer.begin(transform: Matrix4x4) {
-    begin()
-    this.transform = transform
-}
-
-inline fun Renderer.begin(camera: Camera) = begin(camera.projectionView)
-
-fun Renderer.drawTriangle(x0: Float, y0: Float, x1: Float, y1: Float, x2: Float, y2: Float, color0: Color, color1: Color = color0, color2: Color = color0) {
-    require(isActive)
-
-    context.drawTriangle(x0, y0, x1, y1, x2, y2, color0, color1, color2)
-}
-
-fun Renderer.drawRect(x: Float, y: Float, width: Float, height: Float, color00: Color, color01: Color = color00, color11: Color = color00, color10: Color = color00) {
-    require(isActive)
-
-    context.drawRect(x, y, width, height, color00, color01, color11, color10)
-}
+fun <R> Renderer.withCamera(camera: Camera, block: (Renderer) -> R) = withTransform(camera.projectionView, block)

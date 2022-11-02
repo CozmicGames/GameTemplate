@@ -1,9 +1,9 @@
 package engine.physics
 
-import com.gratedgames.utils.maths.FLOAT_EPSILON
-import com.gratedgames.utils.maths.Rectangle
-import com.gratedgames.utils.maths.Vector2
-import com.gratedgames.utils.maths.cross
+import com.cozmicgames.utils.maths.FLOAT_EPSILON
+import com.cozmicgames.utils.maths.Rectangle
+import com.cozmicgames.utils.maths.Vector2
+import com.cozmicgames.utils.maths.cross
 import engine.utils.Transform
 import kotlin.math.abs
 
@@ -18,7 +18,6 @@ open class Body(val transform: Transform = Transform()) {
     var rotation by transform::rotation
     var scaleX by transform::scaleX
     var scaleY by transform::scaleY
-
 
     val force = Vector2()
     var torque = 0.0f

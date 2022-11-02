@@ -1,8 +1,8 @@
 package engine.graphics.particles.generators
 
-import com.gratedgames.utils.Color
-import com.gratedgames.utils.maths.lerp
-import com.gratedgames.utils.maths.randomFloat
+import com.cozmicgames.utils.Color
+import com.cozmicgames.utils.maths.lerp
+import com.cozmicgames.utils.maths.randomFloat
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleGenerator
 import engine.graphics.particles.data.ColorData

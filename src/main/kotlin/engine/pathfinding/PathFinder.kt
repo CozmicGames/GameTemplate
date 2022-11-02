@@ -1,6 +1,6 @@
 package engine.pathfinding
 
-import com.gratedgames.utils.maths.Vector2i
+import com.cozmicgames.utils.maths.Vector2i
 
 interface PathFinder {
     fun findPath(movableObject: MovableObject?, startX: Int, startY: Int, targetX: Int, targetY: Int, maxSearchDistance: Int, allowDiagonalMovement: Boolean): Path?

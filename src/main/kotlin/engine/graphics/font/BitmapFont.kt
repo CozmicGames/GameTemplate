@@ -1,17 +1,14 @@
 package engine.graphics.font
 
-import com.gratedgames.graphics.Font
-import com.gratedgames.graphics.Image
-import com.gratedgames.graphics.gpu.Texture
+import com.cozmicgames.graphics.Font
+import com.cozmicgames.graphics.Image
+import com.cozmicgames.graphics.gpu.Texture2D
+import com.cozmicgames.graphics.toTexture2D
+import com.cozmicgames.utils.rectpack.RectPacker
+import engine.Game
 import engine.graphics.font.DrawableFont.Companion.defaultChars
-import com.gratedgames.graphics.gpu.Texture2D
-import com.gratedgames.graphics.toTexture2D
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.rectpack.RectPacker
 
-class BitmapFont(val font: Font, override val drawableCharacters: String = defaultChars(), padding: Int = 4, val scale: Float = 1.0f) : DrawableFont, Disposable {
-    override val size get() = font.size * scale
-
+class BitmapFont(val font: Font, override val drawableCharacters: String = defaultChars(), padding: Int = 4, override val size: Float = 14.0f) : DrawableFont {
     override val texture: Texture2D
 
     private val glyphs = hashMapOf<Char, Glyph>()
@@ -20,13 +17,13 @@ class BitmapFont(val font: Font, override val drawableCharacters: String = defau
         val charImages = hashMapOf<Int, Image>()
 
         drawableCharacters.forEach {
-            charImages[it.code] = font.getCharImage(it) ?: requireNotNull(font.getCharImage(' '))
+            charImages[it.code] = font.getCharImage(it, size) ?: requireNotNull(font.getCharImage(' ', size))
         }
 
         var image = Image(128, 128)
 
         val rects = charImages.map { (char, image) ->
-            RectPacker.Rectangle(char, (image.width * scale).toInt() + padding, (image.height * scale).toInt() + padding)
+            RectPacker.Rectangle(char, image.width + padding, image.height + padding)
         }.toTypedArray()
 
         while (true) {
@@ -44,20 +41,20 @@ class BitmapFont(val font: Font, override val drawableCharacters: String = defau
 
                 val charImage = charImages[rect.id] ?: continue
 
-                image.drawImage(charImage, x, y, (charImage.width * scale).toInt(), (charImage.height * scale).toInt())
+                image.setImage(charImage, x, y, charImage.width, charImage.height)
 
                 val u0 = x.toFloat() / image.width
                 val v0 = y.toFloat() / image.height
-                val u1 = (x + charImage.width * scale) / image.width
-                val v1 = (y + charImage.height * scale) / image.height
+                val u1 = (x + charImage.width).toFloat() / image.width
+                val v1 = (y + charImage.height).toFloat() / image.height
 
-                glyphs[rect.id.toChar()] = Glyph(u0, v0, u1, v1, (charImage.width * scale).toInt(), (charImage.height * scale).toInt())
+                glyphs[rect.id.toChar()] = Glyph(u0, v0, u1, v1, charImage.width, charImage.height)
             }
 
             break
         }
 
-        texture = image.toTexture2D()
+        texture = image.toTexture2D(Game.graphics2d.pointClampSampler)
     }
 
     override operator fun get(char: Char) = glyphs.getOrElse(char) { requireNotNull(glyphs[' ']) }

@@ -1,7 +1,7 @@
 package engine.utils
 
-import com.gratedgames.utils.Color
-import com.gratedgames.utils.extensions.clamp
+import com.cozmicgames.utils.Color
+import com.cozmicgames.utils.extensions.clamp
 import kotlin.math.floor
 
 class GradientColor(val color: Color, var stop: Float)

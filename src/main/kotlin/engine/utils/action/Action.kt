@@ -1,5 +1,6 @@
 package engine.utils.action
 
+import com.cozmicgames.utils.maths.Easing
 import engine.utils.sleepUnusedTime
 
 abstract class Action {

@@ -1,6 +1,6 @@
 package engine.graphics
 
-import com.gratedgames.graphics.gpu.Texture2D
+import com.cozmicgames.graphics.gpu.Texture2D
 
 class Ninepatch(val texture: TextureRegion, left: Float = 1.0f / 3.0f, right: Float = 1.0f / 3.0f, top: Float = 1.0f / 3.0f, bottom: Float = 1.0f / 3.0f) {
     constructor(texture: Texture2D, left: Float = 1.0f / 3.0f, right: Float = 1.0f / 3.0f, top: Float = 1.0f / 3.0f, bottom: Float = 1.0f / 3.0f) : this(texture.asRegion(), left, right, top, bottom)

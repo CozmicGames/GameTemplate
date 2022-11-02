@@ -1,6 +1,6 @@
 package engine.graphics.particles.generators
 
-import com.gratedgames.utils.maths.HALF_PI
+import com.cozmicgames.utils.maths.HALF_PI
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleGenerator
 import engine.graphics.particles.data.AngleData

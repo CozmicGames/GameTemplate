@@ -1,8 +1,8 @@
 package engine.physics
 
-import com.gratedgames.utils.concurrency.threadLocal
-import com.gratedgames.utils.extensions.clamp
-import com.gratedgames.utils.maths.*
+import com.cozmicgames.utils.concurrency.threadLocal
+import com.cozmicgames.utils.extensions.clamp
+import com.cozmicgames.utils.maths.*
 import kotlin.math.abs
 import kotlin.math.sqrt
 

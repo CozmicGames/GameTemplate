@@ -1,6 +1,6 @@
 package engine.pathfinding.algorithms.heurisitcs
 
-import com.gratedgames.utils.maths.lengthSquared
+import com.cozmicgames.utils.maths.lengthSquared
 import engine.pathfinding.MovableObject
 import engine.pathfinding.TileBasedMap
 import engine.pathfinding.algorithms.AStarPathFinder

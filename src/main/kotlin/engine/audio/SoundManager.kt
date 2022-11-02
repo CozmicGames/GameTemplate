@@ -1,53 +1,57 @@
 package engine.audio
 
-import com.gratedgames.*
-import com.gratedgames.audio.Sound
-import com.gratedgames.files.Files
-import com.gratedgames.utils.Disposable
-import com.gratedgames.utils.extensions.extension
-import com.gratedgames.utils.use
+import com.cozmicgames.Kore
+import com.cozmicgames.audio
+import com.cozmicgames.audio.Sound
+import com.cozmicgames.files.FileHandle
+import com.cozmicgames.log
+import com.cozmicgames.utils.Disposable
 import kotlin.reflect.KProperty
 
 class SoundManager : Disposable {
-    inner class Getter(val file: String) {
+    inner class Getter(val file: FileHandle) {
         operator fun getValue(thisRef: Any, property: KProperty<*>) = getOrAdd(file)
     }
 
     private val sounds = hashMapOf<String, Sound>()
 
-    fun add(file: String) {
-        if (!Kore.files.exists(file, Files.Type.ASSET)) {
+    fun add(file: FileHandle) {
+        if (!file.exists) {
             Kore.log.error(this::class, "Sound file not found: $file")
             return
         }
 
-        val sound = Kore.files.readAsset(file).use {
-            Kore.audio.readSound(it, file.extension)
-        }
+        val sound = Kore.audio.readSound(file)
 
         if (sound == null) {
             Kore.log.error(this::class, "Failed to load sound file: $file")
             return
         }
 
-        add(file, sound)
+        add(file.fullPath, sound)
     }
 
-    operator fun contains(file: String) = file in sounds
-
-    fun add(file: String, sound: Sound) {
-        sounds[file] = sound
+    fun add(name: String, sound: Sound) {
+        sounds[name] = sound
     }
 
-    fun remove(file: String) {
-        sounds.remove(file)
+    operator fun contains(file: FileHandle) = contains(file.fullPath)
+
+    operator fun contains(name: String) = name in sounds
+
+    fun remove(file: FileHandle) = remove(file.fullPath)
+
+    fun remove(name: String) {
+        sounds.remove(name)
     }
 
-    operator fun get(file: String): Sound? {
-        return sounds[file]
+    operator fun get(file: FileHandle) = get(file.fullPath)
+
+    operator fun get(name: String): Sound? {
+        return sounds[name]
     }
 
-    fun getOrAdd(file: String): Sound {
+    fun getOrAdd(file: FileHandle): Sound {
         if (file !in this)
             add(file)
 
@@ -56,10 +60,9 @@ class SoundManager : Disposable {
 
     override fun dispose() {
         sounds.forEach { (_, sound) ->
-            if (sound is Disposable)
-                sound.dispose()
+            sound.dispose()
         }
     }
 
-    operator fun invoke(file: String) = Getter(file)
+    operator fun invoke(file: FileHandle) = Getter(file)
 }

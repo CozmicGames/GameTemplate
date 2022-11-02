@@ -1,8 +1,8 @@
 package engine.graphics.particles.spawners
 
-import com.gratedgames.utils.maths.TWO_PI
-import com.gratedgames.utils.maths.Vector2
-import com.gratedgames.utils.maths.randomFloat
+import com.cozmicgames.utils.maths.TWO_PI
+import com.cozmicgames.utils.maths.Vector2
+import com.cozmicgames.utils.maths.randomFloat
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleSpawner
 import engine.graphics.particles.data.PositionData

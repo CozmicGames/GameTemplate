@@ -1,7 +1,7 @@
 package engine.graphics.particles.generators
 
-import com.gratedgames.utils.maths.randomFloat
-import com.gratedgames.utils.maths.toRadians
+import com.cozmicgames.utils.maths.randomFloat
+import com.cozmicgames.utils.maths.toRadians
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleGenerator
 import engine.graphics.particles.data.AngleData

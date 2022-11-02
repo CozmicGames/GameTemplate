@@ -1,6 +1,6 @@
 package engine.graphics.particles.updaters
 
-import com.gratedgames.utils.maths.Vector2
+import com.cozmicgames.utils.maths.Vector2
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleUpdater
 import engine.graphics.particles.data.AccelerationData

@@ -1,16 +1,16 @@
 package engine
 
-import com.gratedgames.*
+import com.cozmicgames.*
 
 private const val CONFIG_FILE = "config.txt"
 
 fun main() {
     val configuration = Configuration()
 
-    configuration.title = "Game"
-    configuration.icons = arrayOf("icons/icon.png")
-
-    configuration.readFromFile(CONFIG_FILE)
+    if (!configuration.readFromFile(CONFIG_FILE)) {
+        configuration.title = "Game"
+        configuration.icons = arrayOf("icons/icon.png")
+    }
 
     Kore.start(Game, configuration) { DesktopPlatform() }
 

@@ -1,17 +1,16 @@
 package engine.graphics.shaders
 
-import com.gratedgames.Kore
-import com.gratedgames.files
-import com.gratedgames.files.Files
-import com.gratedgames.files.readToString
-import com.gratedgames.graphics.gpu.VertexLayout
-import com.gratedgames.graphics.gpu.pipeline.PipelineDefinition
-import com.gratedgames.utils.extensions.removeComments
+import com.cozmicgames.files.FileHandle
+import com.cozmicgames.files.readToString
+import com.cozmicgames.graphics.gpu.VertexLayout
+import com.cozmicgames.graphics.gpu.pipeline.PipelineDefinition
+import com.cozmicgames.utils.extensions.removeComments
+import engine.materials.Material
 
 open class Shader(source: String) {
     companion object {
-        private fun loadSource(file: String, type: Files.Type): String {
-            val text = Kore.files.readToString(file, type)
+        private fun loadSource(file: FileHandle): String {
+            val text = file.readToString()
             return text.removeComments()
         }
 
@@ -24,7 +23,7 @@ open class Shader(source: String) {
         }
     }
 
-    constructor(file: String, type: Files.Type) : this(loadSource(file, type))
+    constructor(file: FileHandle) : this(loadSource(file))
 
     private val definition = PipelineDefinition()
 
@@ -33,9 +32,6 @@ open class Shader(source: String) {
             """
             $source
                 
-            #section state
-            blend add source_alpha one_minus_source_alpha
-            
             #section layout
             vec2 position
             vec2 texcoord
@@ -44,10 +40,11 @@ open class Shader(source: String) {
             normalized vec4 color byte
             
             #section uniforms
-            mat4 uTransform;
+            mat4 uCameraTransform;
             bool uFlipX;
             bool uFlipY;
             sampler2D uTexture;
+            bool uUseSamplePointAntialiased;
             
             #section types
             struct Vertex {
@@ -89,7 +86,7 @@ open class Shader(source: String) {
                
                 Vertex v = vertexShader(position, tc, color);
                  
-                gl_Position = uTransform * vec4(v.position, 0.0, 1.0);
+                gl_Position = uCameraTransform * vec4(v.position, 0.0, 1.0);
                 vTexcoord = v.texcoord;
                 vColor = v.color;
             }
@@ -99,7 +96,7 @@ open class Shader(source: String) {
             in vec4 vColor;
                                 
             out vec4 outColor;
-                                
+            
             void main() {
                 outColor = fragmentShader(uTexture, vTexcoord, vColor);
             }
@@ -109,4 +106,6 @@ open class Shader(source: String) {
     }
 
     fun createPipeline() = definition.createPipeline()
+
+    open fun setMaterial(material: Material) {}
 }

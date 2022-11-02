@@ -1,8 +1,8 @@
 package engine.utils
 
-import com.gratedgames.utils.Time
-import com.gratedgames.utils.TimeUnit
-import com.gratedgames.utils.durationOf
+import com.cozmicgames.utils.Time
+import com.cozmicgames.utils.TimeUnit
+import com.cozmicgames.utils.durationOf
 
 fun <R> sleepUnusedTime(time: Double, block: () -> R): R {
     var result: R? = null

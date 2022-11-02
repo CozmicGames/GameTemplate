@@ -1,6 +1,6 @@
 package engine.graphics
 
-import com.gratedgames.graphics.gpu.Texture2D
+import com.cozmicgames.graphics.gpu.Texture2D
 
 data class TextureRegion(var texture: Texture2D, var u0: Float, var v0: Float, var u1: Float, var v1: Float) {
     constructor(texture: Texture2D) : this(texture, 0.0f, 0.0f, 1.0f, 1.0f)

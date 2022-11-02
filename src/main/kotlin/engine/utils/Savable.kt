@@ -1,6 +1,6 @@
 package engine.utils
 
-import com.gratedgames.utils.Properties
+import com.cozmicgames.utils.Properties
 
 interface Savable {
     fun read(properties: Properties)

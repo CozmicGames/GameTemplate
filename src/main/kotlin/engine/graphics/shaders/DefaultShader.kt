@@ -2,6 +2,9 @@ package engine.graphics.shaders
 
 object DefaultShader : Shader(
     """
+    #section state
+    blend add source_alpha one_minus_source_alpha
+    
     #section common
     Vertex vertexShader(vec2 position, vec2 texcoord, vec4 color) {
         Vertex v;

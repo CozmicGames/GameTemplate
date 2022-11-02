@@ -1,7 +1,7 @@
 package engine.graphics.particles.spawners
 
-import com.gratedgames.utils.maths.Rectangle
-import com.gratedgames.utils.maths.randomFloat
+import com.cozmicgames.utils.maths.Rectangle
+import com.cozmicgames.utils.maths.randomFloat
 import engine.graphics.particles.ParticleData
 import engine.graphics.particles.ParticleSpawner
 import engine.graphics.particles.data.PositionData
