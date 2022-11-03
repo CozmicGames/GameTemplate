@@ -8,6 +8,7 @@ import com.cozmicgames.utils.maths.OrthographicCamera
 import engine.audio.SoundManager
 import engine.graphics.*
 import engine.input.ControlManager
+import engine.materials.MaterialManager
 import engine.physics.Physics
 import engine.utils.Rumble
 import game.InitialGameState
@@ -17,6 +18,7 @@ object Game : Application {
     val textures by Kore.context.injector(true) { TextureManager() }
     val fonts by Kore.context.injector(true) { FontManager() }
     val shaders by Kore.context.injector(true) { ShaderManager() }
+    val materials by Kore.context.injector(true) { MaterialManager() }
 
     val controls by Kore.context.injector(true) { ControlManager() }
     val graphics2d by Kore.context.injector(true) { Graphics2D() }
