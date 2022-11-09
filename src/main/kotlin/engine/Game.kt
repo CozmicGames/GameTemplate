@@ -7,11 +7,12 @@ import com.cozmicgames.utils.injector
 import com.cozmicgames.utils.maths.OrthographicCamera
 import engine.audio.SoundManager
 import engine.graphics.*
+import engine.graphics.ui.GUI
 import engine.input.ControlManager
 import engine.materials.MaterialManager
 import engine.physics.Physics
 import engine.utils.Rumble
-import game.InitialGameState
+import game.states.LoadingGameState
 
 object Game : Application {
     val sounds by Kore.context.injector(true) { SoundManager() }
@@ -34,7 +35,7 @@ object Game : Application {
         camera.position.setZero()
         camera.update()
 
-        currentState = InitialGameState()
+        currentState = LoadingGameState()
         currentState.onCreate()
     }
 
