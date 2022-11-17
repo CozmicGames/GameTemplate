@@ -128,6 +128,11 @@ class GUI(val skin: GUISkin = GUISkin()) : Disposable {
     private var currentLayerIndex = 0
 
     /**
+     * If set to false, globally disables interaction by always returning an emtpy bitfield on [getState].
+     */
+    var isInteractionEnabled = true
+
+    /**
      * The last element that was added to the GUI.
      */
     var lastElement: GUIElement? = null
@@ -495,6 +500,9 @@ class GUI(val skin: GUISkin = GUISkin()) : Disposable {
      * @return The state of the area as a bitfield.
      */
     fun getState(rectangle: Rectangle, behaviour: ButtonBehaviour = ButtonBehaviour.NONE): Int {
+        if (!isInteractionEnabled)
+            return 0
+
         var state = 0
 
         for (layerIndex in layers.indices.reversed()) {
@@ -597,6 +605,20 @@ class GUI(val skin: GUISkin = GUISkin()) : Disposable {
             tooltipCounter += deltaTime
         else
             tooltipCounter = 0.0f
+    }
+
+    /**
+     * Returns an [GUIVisibility] instance that contains every element that's been added until the invocation of this method.
+     * This can be used to check if a point is outside of any GUI elements.
+     *
+     * @return The computed [GUIVisibility].
+     */
+    fun getCompleteVisibility(): GUIVisibility {
+        val visibility = GUIVisibility()
+        layers.forEach {
+            it.addToVisibility(visibility)
+        }
+        return visibility
     }
 
     /**
