@@ -1,25 +1,25 @@
 package engine.graphics
 
 import com.cozmicgames.Kore
-import com.cozmicgames.audio
 import com.cozmicgames.files.FileHandle
 import com.cozmicgames.graphics
 import com.cozmicgames.graphics.Font
 import com.cozmicgames.log
 import com.cozmicgames.utils.Disposable
-import engine.graphics.shaders.Shader
 import kotlin.reflect.KProperty
 
 class FontManager : Disposable {
-    inner class Getter(val file: FileHandle) {
-        operator fun getValue(thisRef: Any, property: KProperty<*>) = getOrAdd(file)
+    inner class Getter(val file: FileHandle, val name: String) {
+        operator fun getValue(thisRef: Any, property: KProperty<*>) = getOrAdd(file, name)
     }
 
-    private val fonts = hashMapOf<String, Font>()
+    private class Entry(val value: Font, val file: FileHandle?)
+
+    private val fonts = hashMapOf<String, Entry>()
 
     val names get() = fonts.keys.toList()
 
-    fun add(file: FileHandle) {
+    fun add(file: FileHandle, name: String = file.fullPath) {
         if (!file.exists) {
             Kore.log.error(this::class, "Font file not found: $file")
             return
@@ -32,11 +32,11 @@ class FontManager : Disposable {
             return
         }
 
-        add(file.fullPath, font)
+        add(name, font)
     }
 
-    fun add(name: String, font: Font) {
-        fonts[name] = font
+    fun add(name: String, font: Font, file: FileHandle? = null) {
+        fonts[name] = Entry(font, file)
     }
 
     operator fun contains(file: FileHandle) = contains(file.fullPath)
@@ -52,21 +52,23 @@ class FontManager : Disposable {
     operator fun get(file: FileHandle) = get(file.fullPath)
 
     operator fun get(name: String): Font? {
-        return fonts[name]
+        return fonts[name]?.value
     }
 
-    fun getOrAdd(file: FileHandle): Font {
-        if (file !in this)
-            add(file)
+    fun getFileHandle(name: String) = fonts[name]?.file
 
-        return requireNotNull(this[file])
+    fun getOrAdd(file: FileHandle, name: String = file.fullPath): Font {
+        if (name !in this)
+            add(file, name)
+
+        return requireNotNull(this[name])
     }
-
-    operator fun invoke(file: FileHandle) = Getter(file)
 
     override fun dispose() {
         fonts.forEach { (_, font) ->
-            (font as? Disposable)?.dispose()
+            (font.value as? Disposable)?.dispose()
         }
     }
+
+    operator fun invoke(file: FileHandle, name: String = file.fullPath) = Getter(file, name)
 }

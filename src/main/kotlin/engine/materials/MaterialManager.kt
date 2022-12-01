@@ -7,15 +7,17 @@ import com.cozmicgames.log
 import kotlin.reflect.KProperty
 
 class MaterialManager {
-    inner class Getter(val file: FileHandle) {
-        operator fun getValue(thisRef: Any, property: KProperty<*>) = getOrAdd(file)
+    inner class Getter(private val file: FileHandle, private val name: String) {
+        operator fun getValue(thisRef: Any, property: KProperty<*>) = getOrAdd(file, name)
     }
 
-    private val materials = hashMapOf<String, Material>()
+    private class Entry(val value: Material, val file: FileHandle?)
+
+    private val materials = hashMapOf<String, Entry>()
 
     val names get() = materials.keys.toList()
 
-    fun add(file: FileHandle) {
+    fun add(file: FileHandle, name: String = file.fullPath) {
         if (!file.exists) {
             Kore.log.error(this::class, "Material file not found: $file")
             return
@@ -30,11 +32,11 @@ class MaterialManager {
             return
         }
 
-        add(file.fullPath, material)
+        add(name, material, file)
     }
 
-    fun add(name: String, material: Material) {
-        materials[name] = material
+    fun add(name: String, material: Material, file: FileHandle? = null) {
+        materials[name] = Entry(material, file)
     }
 
     operator fun contains(file: FileHandle) = contains(file.fullPath)
@@ -50,16 +52,17 @@ class MaterialManager {
     operator fun get(file: FileHandle) = get(file.fullPath)
 
     operator fun get(name: String): Material? {
-        return materials[name]
+        return materials[name]?.value
     }
 
-    fun getOrAdd(file: FileHandle): Material {
-        if (file !in this)
-            add(file)
+    fun getFileHandle(name: String) = materials[name]?.file
 
-        return requireNotNull(this[file])
+    fun getOrAdd(file: FileHandle, name: String = file.fullPath): Material {
+        if (name !in this)
+            add(file, name)
+
+        return requireNotNull(this[name])
     }
 
-    operator fun invoke(file: FileHandle) = Getter(file)
-
+    operator fun invoke(file: FileHandle, name: String = file.fullPath) = Getter(file, name)
 }
