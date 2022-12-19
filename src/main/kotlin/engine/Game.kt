@@ -10,23 +10,18 @@ import com.cozmicgames.input.Keys
 import com.cozmicgames.utils.Color
 import com.cozmicgames.utils.injector
 import com.cozmicgames.utils.maths.OrthographicCamera
-import engine.audio.SoundManager
+import engine.assets.AssetManager
 import engine.graphics.*
 import engine.graphics.ui.GUI
 import engine.graphics.ui.widgets.label
 import engine.graphics.ui.widgets.separator
 import engine.input.ControlManager
-import engine.materials.MaterialManager
 import engine.physics.Physics
 import engine.utils.Rumble
 import game.InitialGameState
 
 object Game : Application {
-    val sounds by Kore.context.injector(true) { SoundManager() }
-    val textures by Kore.context.injector(true) { TextureManager() }
-    val fonts by Kore.context.injector(true) { FontManager() }
-    val shaders by Kore.context.injector(true) { ShaderManager() }
-    val materials by Kore.context.injector(true) { MaterialManager() }
+    val assets by Kore.context.injector(true) { AssetManager() }
 
     val controls by Kore.context.injector(true) { ControlManager() }
     val graphics2d by Kore.context.injector(true) { Graphics2D() }

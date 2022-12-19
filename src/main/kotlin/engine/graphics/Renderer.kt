@@ -8,14 +8,13 @@ import com.cozmicgames.graphics.gpu.*
 import com.cozmicgames.utils.Color
 import com.cozmicgames.utils.Disposable
 import com.cozmicgames.utils.collections.DynamicStack
-import com.cozmicgames.utils.maths.Camera
-import com.cozmicgames.utils.maths.Matrix4x4
-import com.cozmicgames.utils.maths.Rectangle
-import com.cozmicgames.utils.maths.VectorPath
+import com.cozmicgames.utils.maths.*
 import engine.Game
 import engine.graphics.font.GlyphLayout
 import engine.graphics.shaders.DefaultShader
 import engine.graphics.shaders.Shader
+import engine.assets.managers.getShader
+import engine.assets.managers.getTexture
 
 class Renderer(graphics: Graphics2D) : Disposable {
     val context = DrawContext()
@@ -36,13 +35,15 @@ class Renderer(graphics: Graphics2D) : Disposable {
             if (!forceUpdateShader && value == field)
                 return
 
+            flush()
+
             val pipeline = pipelines.getOrPut(value) { value.createPipeline() }
 
             Kore.graphics.setPipeline(pipeline)
 
             forceUpdateUniforms = true
             texture = Game.graphics2d.blankTexture
-            transform = transform
+            cameraTransform = cameraTransform
             flipX = flipX
             flipY = flipY
             forceUpdateUniforms = false
@@ -50,13 +51,13 @@ class Renderer(graphics: Graphics2D) : Disposable {
             field = value
         }
 
-    var transform = graphics.defaultCamera.projectionView
+    var cameraTransform = graphics.defaultCamera.projectionView
         set(value) {
             if (!forceUpdateUniforms && value == field)
                 return
 
             flush()
-            pipelines[shader]?.getMatrixUniform("uCameraTransform")?.update(value)
+            getPipeline(shader)?.getMatrixUniform("uCameraTransform")?.update(value)
             field = value
         }
 
@@ -66,7 +67,7 @@ class Renderer(graphics: Graphics2D) : Disposable {
                 return
 
             flush()
-            pipelines[shader]?.getTexture2DUniform("uTexture")?.update(value)
+            getPipeline(shader)?.getTexture2DUniform("uTexture")?.update(value)
             field = value
         }
 
@@ -76,7 +77,7 @@ class Renderer(graphics: Graphics2D) : Disposable {
                 return
 
             flush()
-            pipelines[shader]?.getBooleanUniform("uFlipX")?.update(value)
+            getPipeline(shader)?.getBooleanUniform("uFlipX")?.update(value)
             field = value
         }
 
@@ -86,9 +87,11 @@ class Renderer(graphics: Graphics2D) : Disposable {
                 return
 
             flush()
-            pipelines[shader]?.getBooleanUniform("uFlipY")?.update(value)
+            getPipeline(shader)?.getBooleanUniform("uFlipY")?.update(value)
             field = value
         }
+
+    fun getPipeline(shader: Shader) = pipelines[shader]
 
     fun path(block: VectorPath.(Renderer) -> Unit): VectorPath {
         path.clear()
@@ -96,11 +99,11 @@ class Renderer(graphics: Graphics2D) : Disposable {
         return path
     }
 
-    fun <R> withTransform(transform: Matrix4x4, block: (Renderer) -> R): R {
-        val previous = this.transform
-        this.transform = transform
+    fun <R> withCameraTransform(transform: Matrix4x4, block: (Renderer) -> R): R {
+        val previous = cameraTransform
+        cameraTransform = transform
         val result = block(this)
-        this.transform = previous
+        cameraTransform = previous
         return result
     }
 
@@ -147,20 +150,36 @@ class Renderer(graphics: Graphics2D) : Disposable {
         return result
     }
 
-    fun withTransientState(block: Renderer.() -> Unit) {
+    fun pushMatrix(matrix: Matrix3x2) {
+        context.pushMatrix(matrix)
+    }
+
+    fun popMatrix() {
+        context.popMatrix()
+    }
+
+    fun <R> withMatrix(matrix: Matrix3x2, block: Renderer.() -> R): R {
+        pushMatrix(matrix)
+        val result = block(this)
+        popMatrix()
+        return result
+    }
+
+    fun <R> withTransientState(block: Renderer.() -> R): R {
         val shader = this.shader
         val texture = this.texture
-        val transform = this.transform
+        val cameraTransform = this.cameraTransform
         val flipX = this.flipX
         val flipY = this.flipY
-        block(this)
+        val result = block(this)
         forceUpdateUniforms = true
         this.shader = shader
         this.texture = texture
-        this.transform = transform
+        this.cameraTransform = cameraTransform
         this.flipX = flipX
         this.flipY = flipY
         forceUpdateUniforms = false
+        return result
     }
 
     fun draw(texture: TextureRegion, x: Float, y: Float, width: Float, height: Float, color: Color = Color.WHITE, rotation: Float = 0.0f) = draw(texture.texture, x, y, width, height, color, rotation, texture.u0, texture.v0, texture.u1, texture.v1)
@@ -190,10 +209,13 @@ class Renderer(graphics: Graphics2D) : Disposable {
     fun drawGlyphs(glyphLayout: GlyphLayout, x: Float, y: Float, color: Color = Color.WHITE) {
         require(isActive)
 
-        val shader = Game.shaders[glyphLayout.font.requiredShader] ?: DefaultShader
+        val shader = Game.assets.getShader(glyphLayout.font.requiredShader) ?: DefaultShader
 
         withShader(shader) {
-            this.texture = glyphLayout.font.texture
+            getPipeline(shader)?.let {
+                glyphLayout.font.setUniforms(it)
+            }
+            texture = glyphLayout.font.texture
             context.drawGlyphs(glyphLayout, x, y, color)
         }
     }
@@ -201,10 +223,13 @@ class Renderer(graphics: Graphics2D) : Disposable {
     fun drawGlyphsClipped(glyphLayout: GlyphLayout, x: Float, y: Float, clipRect: Rectangle, color: Color = Color.WHITE) {
         require(isActive)
 
-        val shader = Game.shaders[glyphLayout.font.requiredShader] ?: DefaultShader
+        val shader = Game.assets.getShader(glyphLayout.font.requiredShader) ?: DefaultShader
 
         withShader(shader) {
-            this.texture = glyphLayout.font.texture
+            getPipeline(shader)?.let {
+                glyphLayout.font.setUniforms(it)
+            }
+            texture = glyphLayout.font.texture
             context.drawGlyphsClipped(glyphLayout, x, y, clipRect, color)
         }
     }
@@ -231,8 +256,8 @@ class Renderer(graphics: Graphics2D) : Disposable {
         val material = batch.material
 
         if (material != null) {
-            shader = Game.shaders[material.shader] ?: DefaultShader
-            texture = Game.textures[material.colorTexturePath].texture
+            shader = Game.assets.getShader(material.shader) ?: DefaultShader
+            texture = (Game.assets.getTexture(material.colorTexturePath)).texture
             shader.setMaterial(material)
             context.draw(batch.context)
         } else {
@@ -241,7 +266,7 @@ class Renderer(graphics: Graphics2D) : Disposable {
             context.draw(batch.context)
         }
 
-        flush() //TODO: Find out why this is needed here to actually draw all layers
+        flush() //TODO: Find out why this is needed here to actually draw all layers in a scene
         shader = DefaultShader
     }
 
@@ -293,7 +318,7 @@ class Renderer(graphics: Graphics2D) : Disposable {
 }
 
 fun Renderer.setCamera(camera: Camera) {
-    this.transform = camera.projectionView
+    cameraTransform = camera.projectionView
 }
 
-fun <R> Renderer.withCamera(camera: Camera, block: (Renderer) -> R) = withTransform(camera.projectionView, block)
+fun <R> Renderer.withCamera(camera: Camera, block: (Renderer) -> R) = withCameraTransform(camera.projectionView, block)

@@ -8,13 +8,14 @@ import engine.graphics.asRegion
 import engine.graphics.drawRect
 import engine.graphics.particles.data.*
 import engine.graphics.shaders.ParticleShader
+import engine.assets.managers.shaders
 import kotlin.math.floor
 import kotlin.math.min
 
 class ParticleEffect(maxParticles: Int, var emitRate: Float) {
     companion object {
         init {
-            Game.shaders.add("particle", ParticleShader)
+            Game.assets.shaders?.add("particle", ParticleShader)
         }
     }
 
@@ -117,6 +118,10 @@ class ParticleEffect(maxParticles: Int, var emitRate: Float) {
             var currentTexture = textures?.get(index)?.region
 
             Game.renderer.submit(layer, currentTexture?.texture ?: Game.graphics2d.blankTexture, "particle", false, false) { context ->
+                transform?.let {
+                    context.pushMatrix(it)
+                }
+
                 while (index < data.numberOfAlive) {
                     if (textures?.get(index)?.region != currentTexture) {
                         currentTexture = textures?.get(index)?.region
@@ -137,7 +142,7 @@ class ParticleEffect(maxParticles: Int, var emitRate: Float) {
                 }
 
                 transform?.let {
-                    context.transform(it)
+                    context.popMatrix()
                 }
             }
         }
